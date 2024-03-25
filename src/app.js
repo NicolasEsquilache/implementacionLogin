@@ -4,12 +4,17 @@ import handlebars from 'express-handlebars'
 import { Server } from 'socket.io'
 import productsRouter from './routes/products.router.js'
 import cartsRouter from './routes/carts.router.js'
+import usersRouter from './routes/users.router.js'
 import ProductManager from './class/ProductManager.js'
 import chatRouter from './routes/chat.router.js'
 import viewsRouter from './routes/views.router.js'
 import { chatModel } from './dao/models/chat.model.js'
 import { productModel } from './dao/models/product.model.js'
 import mongoose from 'mongoose'
+import MongoStore from 'connect-mongo'
+import session from 'express-session'
+import cookieParser from 'cookie-parser'
+
 
 const port = 8080
 const app = express()
@@ -17,6 +22,18 @@ const httpServer = app.listen(port, () => console.log(`Server online - PORT ${po
 
 //Socket server
 const io = new Server(httpServer)
+
+// Configuración de la sesión y cookies
+app.use(session({
+    store: MongoStore.create({
+        mongoUrl: 'mongodb+srv://nicolasesquilache:coderhouse@cluster0.f2gsvyw.mongodb.net/ecommerce?retryWrites=true&w=majority&appName=Cluster0',
+        ttl: 900,
+    }),
+    secret: 'coderSecret',
+    resave: true,
+    saveUninitialized: true
+}));
+app.use(cookieParser());
 
 //Middlewares
 app.use(express.json())
@@ -29,6 +46,7 @@ app.set('view engine', 'handlebars')
 app.use(express.static(__dirname + '/public'))
 
 //Routes
+app.use('/api/sessions', usersRouter);
 app.use('/api/products', productsRouter)
 app.use('/api/carts', cartsRouter)
 app.use('/chat', chatRouter)
